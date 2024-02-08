@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -48,6 +51,7 @@ public class KittenBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
 
         var message = update.getMessage();
+        var sendMessage = new SendMessage();
 
         if (update.hasMessage() && update.getMessage().hasText()) {
 
@@ -65,7 +69,6 @@ public class KittenBot extends TelegramLongPollingBot {
             chatId = update.getMessage().getChatId();
             messageText = update.getMessage().getText();
 
-            var sendMessage = new SendMessage();
             sendMessage.setChatId(update.getMessage().getChatId().toString());
 
             switch (messageText) {
@@ -107,7 +110,9 @@ public class KittenBot extends TelegramLongPollingBot {
             }
 
         } else if (update.hasCallbackQuery()) {
-            var callbackData = update.getCallbackQuery().getData();
+            CallbackQuery callbackQuery = update.getCallbackQuery();
+            var callbackData = callbackQuery.getData();
+            int messageId = callbackQuery.getMessage().getMessageId();
 
             switch (callbackData) {
                 case "like": {
@@ -133,7 +138,6 @@ public class KittenBot extends TelegramLongPollingBot {
                     } catch (TelegramApiException e) {
                         throw new RuntimeException(e);
                     }
-
                     break;
                 }
                 case "categories":
@@ -146,6 +150,12 @@ public class KittenBot extends TelegramLongPollingBot {
                     break;
                 default:
                     try {
+                        //Удаляю клавиатуру после того как пользователь выбрал категорию
+                        var deleteMessage = new DeleteMessage();
+                        deleteMessage.setChatId(chatId);
+                        deleteMessage.setMessageId(messageId);
+                        execute(deleteMessage);
+
                         var imageUrl = kittenBotClient.makeRequest(callbackData);
                         execute(Sender.sendPhoto(chatId, imageUrl, " "));
                         execute(InlineKeyboardEvaluation.inlineKeyboardEvaluation(chatId));
