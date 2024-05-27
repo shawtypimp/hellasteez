@@ -62,7 +62,7 @@ public class KittenBotClient {
                 LOGGER.error("Error: " + response.code() + " " + response.message());
             }
         } catch (IOException e) {
-            LOGGER.error("Ошибка полусения фото", e);
+            LOGGER.error("Ошибка получения фото", e);
             throw new ServiceException("Error while getting photo", e);
         }
         return photoUrl;

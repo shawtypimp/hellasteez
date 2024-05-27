@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updates.GetUpdates;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -22,6 +23,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 
 @Component
@@ -32,7 +34,7 @@ public class KittenBot extends TelegramLongPollingBot {
 
     private LocalDateTime lastBotStartupTime;
 
-    private static final Logger LOG = LoggerFactory.getLogger(KittenBot.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KittenBot.class);
 
     private static final String START = "/start";
     private static final String HELP = "/help";
@@ -54,19 +56,20 @@ public class KittenBot extends TelegramLongPollingBot {
 
         if (update.hasMessage() && update.getMessage().hasText()) {
 
+            chatId = update.getMessage().getChatId();
+            messageText = update.getMessage().getText();
+
             //Берём дату сообщения и переводим её из формата Unix time в местное время и дату в Java
             long messageUnixTime = message.getDate();
             var instant = Instant.ofEpochSecond(messageUnixTime);
             var messageTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-            lastBotStartupTime = LocalDateTime.now();
+            lastBotStartupTime = LocalDateTime.now().minusSeconds(5);
 
             // Проверяем, если сообщение было отправлено до последнего запуска бота
             if (messageTime.isBefore(lastBotStartupTime)) {
                 return; // Пропускаем обновление
             }
 
-            chatId = update.getMessage().getChatId();
-            messageText = update.getMessage().getText();
 
             sendMessage.setChatId(update.getMessage().getChatId().toString());
 
@@ -159,7 +162,7 @@ public class KittenBot extends TelegramLongPollingBot {
                         execute(Sender.sendPhoto(chatId, imageUrl, " "));
                         execute(InlineKeyboardEvaluation.inlineKeyboardEvaluation(chatId));
                     } catch (ServiceException | TelegramApiException | IOException e) {
-                        LOG.error("Error during processing callback query: " + e.getMessage());
+                        LOGGER.error("Error during processing callback query: " + e.getMessage());
 
                         e.printStackTrace();
                         throw new RuntimeException(e);

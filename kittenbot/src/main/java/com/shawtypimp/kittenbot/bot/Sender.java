@@ -10,13 +10,6 @@ import java.net.URL;
 
 public class Sender {
 
-    public static SendMessage sendMessage (Long chatId, String text) {
-        var sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId.toString());
-        sendMessage.setText(text);
-        return sendMessage;
-    }
-
     public static SendPhoto sendPhoto(Long chatId, String imageUrl, String caption) throws IOException {
         URL url = new URL(imageUrl);
         var photo = new InputFile(String.valueOf(url));
